@@ -52,6 +52,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
         } as z.infer<typeof signInSchema>,
   })
 
+  
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log('clicked',values);
