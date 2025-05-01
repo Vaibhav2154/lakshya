@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     if (dev) {
       config.devtool = 'source-map';
     }
+    
     return config;
   },
 };
