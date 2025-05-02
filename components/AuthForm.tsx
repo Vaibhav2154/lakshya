@@ -1,4 +1,5 @@
-"use client"
+'use client'
+
 
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,58 +11,75 @@ import Link from "next/link"
 import { toast } from "sonner"
 import FormField from "./FormField"
 import { useRouter } from "next/navigation"
+import { auth } from "@/firebase/client"
+import { signIn, signUp } from "@/lib/actions/auth.action"
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
 
 
-const AuthFormSchema = (type: FormType) => {
+const authFormSchema = (type: FormType) => {
   return z.object({
-    name: type === 'sign-in' ? z.string().min(3) : z.string().optional(),
+    name: type === 'sign-up' ? z.string().min(3) : z.string().optional(),
     email: z.string().email(),
-    password: z.string().min(3)
-
+    password: z.string().min(3),
   })
 }
+
 const AuthForm = ({ type }: { type: FormType }) => {
-
-  const router = useRouter();
-
-  const signUpSchema = z.object({
-    name: z.string().min(3, "Name must contain at least 3 characters"),
-    email: z.string().email("Please enter a valid email"),
-    password: z.string().min(3, "Password must be at least 6 characters long"),
-  });
-  
-  const signInSchema = z.object({
-    email: z.string().email("Please enter a valid email"),
-    password: z.string().min(3, "Password must be at least 6 characters long"),
-  });
-  
-  // Then use the appropriate schema based on the form type
-  const formSchema = type === 'sign-up' ? signUpSchema : signInSchema;
-
+  const router = useRouter()
+  const formSchema = authFormSchema(type)
+  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: type === 'sign-up' 
-      ? {
-          name: "",
-          email: "",
-          password: "",
-        } as z.infer<typeof signUpSchema>
-      : {
-          email: "",
-          password: "",
-        } as z.infer<typeof signInSchema>,
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
   })
 
-  
+
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('clicked',values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('clicked', values);
     console.log('Type:', type);
     try {
       if (type === 'sign-up') {
+
+        const { name, email, password } = values;
+
+
+        const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
+
+        const result = await signUp({
+          uid: userCredentials.user.uid,
+          name: name!,  
+          email,
+          password,
+        });
+
+        if (!result?.success) {
+          toast.error(result?.message);
+          return;
+        }
+
         toast.success('Account created successfully Please sign in.');
         router.push('/sign-in');
       } else {
+
+        const { email, password } = values;
+        const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+
+        const idToken = await userCredentials.user.getIdToken();
+
+        if (!idToken) {
+          toast.error('Sign in failed');
+          return;
+        }
+
+        await signIn(
+          { email, idToken }
+        )
+
         toast.success('Sign in successfull');
         router.push('/');
       }
@@ -83,7 +101,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
         </div>
         <h3 className="text-center">Interview prep made easy</h3>
         <Form {...form} >
-          <form onSubmit={form.handleSubmit(onSubmit, (errors)=>{
+          <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
             console.log('Form validation errors:', errors);
             toast.error('Form validation failed. Please check your inputs.');
           })} className="space-y-6 w-full mt-4 form">
@@ -108,7 +126,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
               label="Password"
               placeholder="Enter password (min of 3 char)"
               type="password"
-            />            
+            />
             <Button className="btn animate-glow" type="submit">{
               isSignIn ? "Sign In" : "Sign Up"
             }</Button>

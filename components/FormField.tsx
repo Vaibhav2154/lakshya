@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from './ui/form'
 import { Input } from './ui/input'
