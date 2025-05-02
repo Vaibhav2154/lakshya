@@ -1,4 +1,5 @@
 import { interviewCovers, mappings } from "@/constants";
+import { Auth, createUserWithEmailAndPassword } from "@firebase/auth";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -45,3 +46,4 @@ export const getRandomInterviewCover = () => {
   const randomIndex = Math.floor(Math.random() * interviewCovers.length);
   return `/covers${interviewCovers[randomIndex]}`;
 };
+
