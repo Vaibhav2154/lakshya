@@ -220,7 +220,7 @@
     }
   }
 
-  .call-view {
+  .call-view {  
     @apply flex sm:flex-row flex-col gap-10 items-center justify-between w-full;
 
     h3 {
